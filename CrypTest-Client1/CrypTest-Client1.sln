@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrypTest-Client1", "CrypTest-Client1\CrypTest-Client1.csproj", "{EAB95F3A-A676-4658-9B40-78ABEC7F2B77}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptTest-Client2", "CryptTest-Client2\CryptTest-Client2.csproj", "{1149DD7C-F081-42FD-BEAE-B98D14F08C44}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EAB95F3A-A676-4658-9B40-78ABEC7F2B77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAB95F3A-A676-4658-9B40-78ABEC7F2B77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAB95F3A-A676-4658-9B40-78ABEC7F2B77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAB95F3A-A676-4658-9B40-78ABEC7F2B77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
