@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,7 +90,8 @@ namespace CrypTest_Client1
             var reqStream = req.GetRequestStream();
             using (StreamWriter sw = new StreamWriter(reqStream))
             {
-                sw.Write("<sectest>testing</sectest>");
+                string body = CreateRequestBody();
+                sw.Write(body);
             }
             var resp = req.GetResponse();
             var respStream = resp.GetResponseStream();
@@ -97,6 +99,30 @@ namespace CrypTest_Client1
             {
                 return sr.ReadToEnd();
             }
+        }
+
+        public string CreateRequestBody()
+        {
+            string encryptedBody = null;
+            string plainTextBody = "<sectest>Test message from CLIENT 1111</sectest>";
+
+            AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
+            aesProvider.KeySize = 256;
+
+            var key = aesProvider.Key;
+            var iv = aesProvider.IV;
+
+            using (MemoryStream ms = new MemoryStream())
+            using (CryptoStream cs = new CryptoStream(ms, aesProvider.CreateEncryptor(), CryptoStreamMode.Write))
+            using (StreamWriter sr = new StreamWriter(cs))
+            {
+                sr.Write(plainTextBody);
+                sr.Close();
+
+                encryptedBody = Convert.ToBase64String(ms.ToArray());
+            }
+
+            return encryptedBody;
         }
     }
 }
