@@ -5,8 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CryptTest_Client2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
+        Title="Client 2" Height="350" Width="525"
+        Name="MainWindow2"
+        Style="{StaticResource MainPageStyle}">
+    
+    <Grid Name="MainGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Name="LogLabelRowDef" Height="auto" />
+            <RowDefinition Name="LogRowDef" Height="*" />
+            <RowDefinition Name="ButtonsRowDef" Height="auto" />
+        </Grid.RowDefinitions>
+
+        <Label Name="LogLabel" Grid.Column="0" Grid.Row="0">
+            Log Console:
+        </Label>
+        <TextBlock Name="LogTextBlock" Grid.Column="0" Grid.Row="1">
+        </TextBlock>
+
+        <StackPanel Name="ButtonsStackPanel" Grid.Column="0" Grid.Row="2">
+            <Button Name="CloseButton">Close</Button>
+        </StackPanel>
     </Grid>
 </Window>

@@ -20,9 +20,52 @@ namespace CrypTest_Client1
     /// </summary>
     public partial class MainWindow : Window
     {
+        private SecClient1 _secClient1;
+        private Logger _logger;
+
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += MainWindow_Loaded;
+            Closed += MainWindow_Closed;
+            CloseButton.Click += CloseButton_Click;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            _logger = new Logger(this.LogTextBlock);
+            _logger.Write("Logger initialized.");
+
+            _logger.Write("Creating security client.");
+            _secClient1 = new SecClient1(_logger);
+
+            _logger.Write("Starting to listen for requests.");
+            _secClient1.Start();
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            _secClient1.Dispose();
+        }
+    }
+
+    public class Logger
+    {
+        private TextBlock _logTextBlock;
+
+        public Logger(TextBlock logTextBlock)
+        {
+            _logTextBlock = logTextBlock;
+        }
+
+        public void Write(string message)
+        {
+            _logTextBlock.Text += message + Environment.NewLine;
         }
     }
 }

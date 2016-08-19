@@ -4,6 +4,28 @@
              xmlns:local="clr-namespace:CrypTest_Client1"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <Style x:Key="MainPageStyle">
+            <Setter Property="Page.Background" Value="Black" />
+            <Setter Property="Page.FontFamily" Value="Verdana" />
+            <Setter Property="Page.FontSize" Value="14" />
+            <Setter Property="Page.Foreground" Value="Green" />
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="FontFamily" Value="Verdana" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="LightGreen" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="TextBlock.Padding" Value="12 0 0 0" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="LightGreen" />
+            <Setter Property="BorderBrush" Value="LightGreen" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="10" />
+        </Style>
     </Application.Resources>
 </Application>
