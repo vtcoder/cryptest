@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -50,6 +51,26 @@ namespace CryptTest_Client2
             }
             catch (ObjectDisposedException)
             {
+            }
+        }
+
+        public string SendRequest()
+        {
+            HttpWebRequest req = WebRequest.Create("http://localhost:13889/sectest/") as HttpWebRequest;
+            req.Headers.Add("sectest-req-client", "2"); //Set header to indicate request came from security client #2.
+            req.MediaType = "text/xml";
+            req.Method = "POST";
+            req.UserAgent = "sectest-client";
+            var reqStream = req.GetRequestStream();
+            using (StreamWriter sw = new StreamWriter(reqStream))
+            {
+                sw.Write("<sectest>testing</sectest>");
+            }
+            var resp = req.GetResponse();
+            var respStream = resp.GetResponseStream();
+            using (StreamReader sr = new StreamReader(respStream))
+            {
+                return sr.ReadToEnd();
             }
         }
     }

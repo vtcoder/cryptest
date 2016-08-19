@@ -24,7 +24,7 @@
             <Setter Property="Background" Value="Black"/>
             <Setter Property="Foreground" Value="LightGreen" />
             <Setter Property="BorderBrush" Value="LightGreen" />
-            <Setter Property="Padding" Value="10" />
+            <Setter Property="Padding" Value="10 10 20 10" />
             <Setter Property="Margin" Value="10" />
         </Style>
     </Application.Resources>

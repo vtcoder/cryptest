@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,20 @@ namespace CryptTest_Client2
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
+            SendTestRequestButton.Click += SendTestRequestButton_Click;
+            OpenClient1Button.Click += OpenClient1Button_Click;
+        }
+
+        private void OpenClient1Button_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(@"..\..\..\CrypTest-Client1\bin\Debug\CrypTest-Client1.exe");
+        }
+
+        private void SendTestRequestButton_Click(object sender, RoutedEventArgs e)
+        {
+            _logger.Write("Sending test request to client 1...");
+            var res = _secClient2.SendRequest();
+            _logger.Write("Response was: " + res);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

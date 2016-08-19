@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,18 @@ namespace CrypTest_Client1
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
+            SendTestRequestButton.Click += SendTestRequestButton_Click;
+            OpenClient2Button.Click += OpenClient2Button_Click;
+        }
+
+        private void OpenClient2Button_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(@"..\..\..\CryptTest-Client2\bin\Debug\CryptTest-Client2.exe");
+        }
+
+        private void SendTestRequestButton_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -39,7 +52,7 @@ namespace CrypTest_Client1
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             _logger = new Logger(this.LogTextBlock);
-            _logger.Write("Logger initialized.");
+            _logger.Write("Logger initialized.", false);
 
             _logger.Write("Creating security client.");
             _secClient1 = new SecClient1(_logger);
@@ -63,9 +76,12 @@ namespace CrypTest_Client1
             _logTextBlock = logTextBlock;
         }
 
-        public void Write(string message)
+        public void Write(string message, bool addStartingNewLine = true, bool isNewSection = false)
         {
-            _logTextBlock.Text += message + Environment.NewLine;
+            _logTextBlock.Text += 
+                (addStartingNewLine ? Environment.NewLine : "") +
+                (isNewSection ? Environment.NewLine : "") +
+                message;
         }
     }
 }
