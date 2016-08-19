@@ -53,8 +53,8 @@ namespace CryptTest_Client2
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _logger = new Logger(this.LogTextBlock);
-            _logger.Write("Logger initialized.");
+            _logger = new Logger(this.LogTextBlock, this.LogScrollViewer);
+            _logger.Write("Logger initialized.", false);
 
             _logger.Write("Creating security client.");
             _secClient2 = new SecClient2(_logger);
@@ -72,15 +72,21 @@ namespace CryptTest_Client2
     public class Logger
     {
         private TextBlock _logTextBlock;
+        private ScrollViewer _logScrollViewer;
 
-        public Logger(TextBlock logTextBlock)
+        public Logger(TextBlock logTextBlock, ScrollViewer logScrollViewer)
         {
             _logTextBlock = logTextBlock;
+            _logScrollViewer = logScrollViewer;
         }
 
-        public void Write(string message)
+        public void Write(string message, bool addStartingNewLine = true, bool isNewSection = false)
         {
-            _logTextBlock.Text += message + Environment.NewLine;
+            _logTextBlock.Text +=
+                (addStartingNewLine ? Environment.NewLine : "") +
+                (isNewSection ? Environment.NewLine : "") +
+                message;
+            _logScrollViewer.ScrollToBottom();
         }
     }
 }

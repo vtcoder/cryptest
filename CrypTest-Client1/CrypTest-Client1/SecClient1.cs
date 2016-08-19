@@ -78,5 +78,25 @@ namespace CrypTest_Client1
             {
             }
         }
+
+        public string SendRequest()
+        {
+            HttpWebRequest req = WebRequest.Create("http://localhost:13890/sectest/") as HttpWebRequest;
+            req.Headers.Add("sectest-req-client", "1"); //Set header to indicate request came from security client #2.
+            req.MediaType = "text/xml";
+            req.Method = "POST";
+            req.UserAgent = "sectest-client";
+            var reqStream = req.GetRequestStream();
+            using (StreamWriter sw = new StreamWriter(reqStream))
+            {
+                sw.Write("<sectest>testing</sectest>");
+            }
+            var resp = req.GetResponse();
+            var respStream = resp.GetResponseStream();
+            using (StreamReader sr = new StreamReader(respStream))
+            {
+                return sr.ReadToEnd();
+            }
+        }
     }
 }

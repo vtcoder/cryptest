@@ -21,7 +21,7 @@ namespace CryptTest_Client2
 
         public void Dispose()
         {
-            _logger.Write("SecClient2 is stopping the HTTP listener...");
+            _logger.Write("SecClient2 is stopping the HTTP listener...", isNewSection: true);
             _httpListener.Stop();
             _httpListener.Close();
         }
@@ -44,9 +44,33 @@ namespace CryptTest_Client2
                 while (true)
                 {
                     var context = await _httpListener.GetContextAsync();
-                    _logger.Write("Receiving a request.");
+                    _logger.Write("Receiving a request.", isNewSection: true);
 
+                    _logger.Write("Request headers:", isNewSection: true);
                     var request = context.Request;
+                    foreach (var hKey in request.Headers.AllKeys)
+                    {
+                        _logger.Write($"  {hKey} = {request.Headers[hKey]}");
+                    }
+
+                    _logger.Write("\nRequest body:", isNewSection: true);
+                    using (StreamReader sr = new StreamReader(request.InputStream))
+                    {
+                        _logger.Write(sr.ReadToEnd());
+                    }
+
+                    _logger.Write("Creating response...", isNewSection: true);
+                    var response = context.Response;
+                    response.StatusCode = 200;
+                    string responseBody = "<sectestresp>testing response<sectestresp>";
+                    _logger.Write("Response body: ");
+                    _logger.Write(responseBody);
+                    using (StreamWriter sw = new StreamWriter(response.OutputStream))
+                    {
+                        sw.Write(responseBody);
+                    }
+                    response.Close();
+                    _logger.Write("Response sent");
                 }
             }
             catch (ObjectDisposedException)

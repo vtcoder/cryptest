@@ -41,7 +41,9 @@ namespace CrypTest_Client1
 
         private void SendTestRequestButton_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            _logger.Write("Sending test request to client 2...");
+            var res = _secClient1.SendRequest();
+            _logger.Write("Response was: " + res);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -51,7 +53,7 @@ namespace CrypTest_Client1
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _logger = new Logger(this.LogTextBlock);
+            _logger = new Logger(this.LogTextBlock, this.LogScrollViewer);
             _logger.Write("Logger initialized.", false);
 
             _logger.Write("Creating security client.");
@@ -70,10 +72,12 @@ namespace CrypTest_Client1
     public class Logger
     {
         private TextBlock _logTextBlock;
+        private ScrollViewer _logScrollViewer;
 
-        public Logger(TextBlock logTextBlock)
+        public Logger(TextBlock logTextBlock, ScrollViewer logScrollViewer)
         {
             _logTextBlock = logTextBlock;
+            _logScrollViewer = logScrollViewer;
         }
 
         public void Write(string message, bool addStartingNewLine = true, bool isNewSection = false)
@@ -82,6 +86,7 @@ namespace CrypTest_Client1
                 (addStartingNewLine ? Environment.NewLine : "") +
                 (isNewSection ? Environment.NewLine : "") +
                 message;
+            _logScrollViewer.ScrollToBottom();
         }
     }
 }

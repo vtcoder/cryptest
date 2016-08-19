@@ -22,8 +22,10 @@
         <Label Name="LogLabel" Grid.Column="0" Grid.Row="0">
             Log Console:
         </Label>
-        <TextBlock Name="LogTextBlock" Grid.Column="0" Grid.Row="1">
-        </TextBlock>
+        <ScrollViewer Name="LogScrollViewer" Grid.Column="0" Grid.Row="1">
+            <TextBlock Name="LogTextBlock">
+            </TextBlock>
+        </ScrollViewer>
 
         <StackPanel Name="ButtonsStackPanel" Grid.Column="0" Grid.Row="2" Orientation="Horizontal">
             <Button Name="OpenClient2Button">Open Client 2</Button>
