@@ -11,6 +11,9 @@ namespace CryptTest_Client2
 {
     public class SecClient2 : IDisposable
     {
+        private const string SHARED_AES_SYMETRIC_KEY = "uup59EXQZxa49+9W/NLjnZCk+gChopNTyYx04Y95l4U=";
+        private const string AES_IV = "ufbNZiWGEeyAlkWddhORcQ==";
+
         private HttpListener _httpListener;
         private Logger _logger;
 
@@ -54,11 +57,17 @@ namespace CryptTest_Client2
                         _logger.Write($"  {hKey} = {request.Headers[hKey]}");
                     }
 
-                    _logger.Write("\nRequest body:", isNewSection: true);
+                    _logger.Write("\nEncrypted request body:", isNewSection: true);
+                    string encryptedRequestBody = null;
                     using (StreamReader sr = new StreamReader(request.InputStream))
                     {
-                        _logger.Write(sr.ReadToEnd());
+                        encryptedRequestBody = sr.ReadToEnd();
                     }
+                    _logger.Write(encryptedRequestBody);
+
+                    _logger.Write("\nDecrypted request body:", isNewSection: true);
+                    string requestBody = DecryptRequestBody(encryptedRequestBody);
+                    _logger.Write(requestBody);
 
                     _logger.Write("Creating response...", isNewSection: true);
                     var response = context.Response;
@@ -77,6 +86,28 @@ namespace CryptTest_Client2
             catch (ObjectDisposedException)
             {
             }
+        }
+
+        public string DecryptRequestBody(string encryptedRequestBody)
+        {
+            string plainTextBody = null;
+
+            AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
+            aesProvider.KeySize = 256;
+
+            aesProvider.Key = Convert.FromBase64String(SHARED_AES_SYMETRIC_KEY);
+            aesProvider.IV = Convert.FromBase64String(AES_IV);
+
+            var encryptedBytes = Convert.FromBase64String(encryptedRequestBody);
+
+            using (MemoryStream ms = new MemoryStream(encryptedBytes))
+            using (CryptoStream cs = new CryptoStream(ms, aesProvider.CreateDecryptor(), CryptoStreamMode.Read))
+            using (StreamReader sr = new StreamReader(cs))
+            {
+                plainTextBody = sr.ReadToEnd();
+            }
+
+            return plainTextBody;
         }
 
         public string SendRequest()
@@ -108,8 +139,8 @@ namespace CryptTest_Client2
             AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
             aesProvider.KeySize = 256;
 
-            var key = aesProvider.Key;
-            var iv = aesProvider.IV;
+            aesProvider.Key = Convert.FromBase64String(SHARED_AES_SYMETRIC_KEY);
+            aesProvider.IV = Convert.FromBase64String(AES_IV);
 
             using (MemoryStream ms = new MemoryStream())
             using (CryptoStream cs = new CryptoStream(ms, aesProvider.CreateEncryptor(), CryptoStreamMode.Write))
