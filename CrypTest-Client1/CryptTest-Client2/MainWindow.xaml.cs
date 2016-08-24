@@ -31,7 +31,13 @@ namespace CryptTest_Client2
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
             SendTestRequestButton.Click += SendTestRequestButton_Click;
+            SendSecRequestButton.Click += SendSecRequestButton_Click;
             OpenClient1Button.Click += OpenClient1Button_Click;
+        }
+
+        private void SendSecRequestButton_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void OpenClient1Button_Click(object sender, RoutedEventArgs e)

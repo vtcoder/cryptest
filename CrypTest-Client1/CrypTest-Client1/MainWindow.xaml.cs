@@ -32,7 +32,18 @@ namespace CrypTest_Client1
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
             SendTestRequestButton.Click += SendTestRequestButton_Click;
+            SendSecRequestButton.Click += SendSecRequestButton_Click;
             OpenClient2Button.Click += OpenClient2Button_Click;
+        }
+
+        private void SendSecRequestButton_Click(object sender, RoutedEventArgs e)
+        {
+            _logger.Write("Sending secure request to client 2...", isNewSection: true);
+            string messageToSend = "Hello, this is a secure test message from client 1 to client 2.";
+            _logger.Write("Message to send:");
+            _logger.Write(messageToSend);
+            var res = _secClient1.SendSecureRequest(messageToSend);
+            _logger.Write("Response was: " + res);
         }
 
         private void OpenClient2Button_Click(object sender, RoutedEventArgs e)

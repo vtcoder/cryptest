@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CryptTest_Client2"
         mc:Ignorable="d"
-        Title="Client 2" Height="350" Width="525"
+        Title="Client 2" Height="350" Width="625"
         Name="MainWindow2"
         Style="{StaticResource MainPageStyle}">
     
@@ -29,7 +29,8 @@
         
         <StackPanel Name="ButtonsStackPanel" Grid.Column="0" Grid.Row="2" Orientation="Horizontal">
             <Button Name="OpenClient1Button">Open Client 1</Button>
-            <Button Name="SendTestRequestButton">Send Test Request</Button>
+            <Button Name="SendTestRequestButton">Send Request</Button>
+            <Button Name="SendSecRequestButton">Send Sec Request</Button>
             <Button Name="CloseButton">Close</Button>
         </StackPanel>
     </Grid>
