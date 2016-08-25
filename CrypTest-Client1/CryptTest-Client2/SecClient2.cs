@@ -213,7 +213,7 @@ namespace CryptTest_Client2
             }
         }
 
-        private Dictionary<string, Tuple<string, string>> _sessionKeys = new Dictionary<string, Tuple<string, string>>();
+        private Dictionary<string, Tuple<string, string, string>> _sessionKeys = new Dictionary<string, Tuple<string, string, string>>();
 
         private void ProcessSecureRequest(string message, NameValueCollection headers, HttpListenerContext context)
         {
@@ -235,8 +235,11 @@ namespace CryptTest_Client2
 
             switch(action)
             {
-                case "new-session-handshake":
-                    var handshakeResponse = ProcessHandshake(message);
+                case "handshake-init":
+                    ProcessHandshakeInit(message, headers, context, sessID);
+                    break; 
+                case "handshake-key-exchange":
+                    var handshakeResponse = ProcessHandshakeKeyExchange(message, headers, context, sessID);
                     SendResponseSecure(handshakeResponse, context);
                     break;
                 case "message-transfer":
@@ -248,37 +251,45 @@ namespace CryptTest_Client2
             }
         }
 
-        private void SendResponseSecure(string responseMessage, HttpListenerContext context)
+        private void ProcessHandshakeInit(string message, NameValueCollection headers, HttpListenerContext context, string sessID)
         {
-            _logger.Write("Creating response...", isNewSection: true);
-            var response = context.Response;
-            response.StatusCode = 200;
-            _logger.Write("Response body: ");
-            _logger.Write(responseMessage);
-            using (StreamWriter sw = new StreamWriter(response.OutputStream))
-            {
-                sw.Write(responseMessage);
-            }
-            response.Close();
-            _logger.Write("Response sent");
+            //Initialize our asymetric cryptography provider.
+            RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider(2048);
+            string rsaProviderXML = rsaProvider.ToXmlString(false); //Exclude private key because we will send this to the client.
+
+            //Add the session ID to the session dictionary, and include the RSA public and private key info.
+            _sessionKeys.Add(sessID, new Tuple<string, string, string>(rsaProvider.ToXmlString(true), null, null));
+
+            SendResponseSecure(rsaProviderXML, context, "ok");
         }
 
-        private string ProcessHandshake(string message)
+        private string ProcessHandshakeKeyExchange(string message, NameValueCollection headers, HttpListenerContext context, string sessID)
         {
-            //Get the session ID.
-            string sessID = Regex.Match(message, "<sessID>(?<RegSessID>[^<]*)</sessID").Groups["RegSessID"].Value;
+            //Get the encrypted key and IV.
+            string encryptedKey = Regex.Match(message, "<sesskey>(?<RegKey>[^<]*)</sesskey").Groups["RegKey"].Value;
+            string encryptedIv = Regex.Match(message, "<iv>(?<RegIv>[^<]*)</iv").Groups["RegIv"].Value;
 
-            //Get the key.
-            string key = Regex.Match(message, "<sesskey>(?<RegKey>[^<]*)</sesskey").Groups["RegKey"].Value;
+            //Decode the encrypted key and IV from base 64 to bytes.
+            byte[] encryptedKeyBytes = Convert.FromBase64String(encryptedKey);
+            byte[] encryptedIvBytes = Convert.FromBase64String(encryptedIv);
 
-            //Get the IV.
-            string iv = Regex.Match(message, "<iv>(?<RegIv>[^<]*)</iv").Groups["RegIv"].Value;
+            //Initialize our asymetric cryptography provider.
+            RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider(2048);
+            rsaProvider.FromXmlString(_sessionKeys[sessID].Item1); //Build RSA provider from XML string containing both public and private keys.
 
-            //Add the session ID to the session dictionary.
-            _sessionKeys.Add(sessID, new Tuple<string, string>(key, iv));
+            //Decrypt the key and IV.
+            byte[] decryptedKeyBytes = rsaProvider.Decrypt(encryptedKeyBytes, true);
+            byte[] decryptedIvBytes = rsaProvider.Decrypt(encryptedIvBytes, true);
 
-            string handshakeResponse = $"<sectest><symcrypt><sessID>{sessID}</sessID><status>OK</status></symcrypt></sectest>";
-            return handshakeResponse;
+            //Encode the decrypted key and IV as base 64 string for storage in session (we don't have to do this, we could just store the byte arrays, but strings make it easier for debugging for this example app).
+            string key = Convert.ToBase64String(decryptedKeyBytes);
+            string iv = Convert.ToBase64String(decryptedIvBytes);
+
+            //Get the session data from the session dictionary and update it to include the symetric private key and IV.
+            _sessionKeys[sessID] = new Tuple<string, string, string>(_sessionKeys[sessID].Item1, key, iv);
+
+            string handshakeKeyExchangeResponse = $"<sectest><symcrypt>Private keys received - using symetrics encryption from this point forward.</symcrypt></sectest>";
+            return handshakeKeyExchangeResponse;
         }
 
         private string ProcessMessageSecure(string encryptedMessage, NameValueCollection headers, HttpListenerContext context, string sessID)
@@ -286,8 +297,8 @@ namespace CryptTest_Client2
             if (_sessionKeys.ContainsKey(sessID))
             {
                 var keyInfo = _sessionKeys[sessID];
-                string key = keyInfo.Item1;
-                string iv = keyInfo.Item2;
+                string key = keyInfo.Item2;
+                string iv = keyInfo.Item3;
 
                 string message = DecryptRequestBodySecure(encryptedMessage, key, iv);
 
@@ -325,6 +336,25 @@ namespace CryptTest_Client2
             }
 
             return plainTextBody;
+        }
+
+        private void SendResponseSecure(string responseMessage, HttpListenerContext context, string status = null)
+        {
+            _logger.Write("Creating response...", isNewSection: true);
+            var response = context.Response;
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                response.AddHeader("sectest-status", status);
+            }
+            response.StatusCode = 200;
+            _logger.Write("Response body: ");
+            _logger.Write(responseMessage);
+            using (StreamWriter sw = new StreamWriter(response.OutputStream))
+            {
+                sw.Write(responseMessage);
+            }
+            response.Close();
+            _logger.Write("Response sent");
         }
 
         #endregion
