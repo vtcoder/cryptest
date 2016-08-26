@@ -15,9 +15,14 @@ namespace CrypTest_Client1
     /// <summary>
     /// TODO
     /// - DONE: private key symetric messgae encryption, using dymacially generated keys
-    /// - IN PROG: public key asymetric key exchange, used to pass the priv-sym-key
-    /// - MAC hash of message content to ensure it hasn't changed
+    /// - DONE: public key asymetric key exchange, used to pass the priv-sym-key
+    ///     NOTE only done for client1 to cliet2 as server
     /// - Digital signature to ensure authentication
+    /// - MAC hash of message content to ensure it hasn't changed
+    /// - Refactor to common library
+    /// - Fill out both sides
+    /// - Use a test certificate as the source of the asymetric keys?
+    ///     Would probably have to install it locally with pub and priv keys, but be sure to load in client with just public key if possible
     /// </summary>
     public class SecClient1 : IDisposable
     {
@@ -196,12 +201,37 @@ namespace CrypTest_Client1
             //Initialize our asymetric cryptography provider. This will just have the public key.
             RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
             rsaProvider.FromXmlString(handshakeInitResponse.Item1);
-            
+
+            //Create a hash of the message (to use for authentication signature verifiation).
+            byte[] hashBytes = null;
+            SHA256 sha256 = SHA256.Create();
+            using (MemoryStream ms = new MemoryStream())
+            using (StreamWriter sw = new StreamWriter(ms, Encoding.UTF8))
+            {
+                sw.Write(handshakeInitResponse.Item1);
+                sw.Close();
+
+                hashBytes = sha256.ComputeHash(ms.ToArray());
+            }
+
+            //Check the authentication signature to make sure it is valid.
+            //This tells us
+            // a) The sender has the private key associated with this public key, so they are who they say they are (assuming we know we can trust the public key, like with a certificate, but ignoring that part for now)
+            // b) The message content was not tampered with. This because the hash of the message has to match.
+            string signature = handshakeInitResponse.Item2["sectest-auth-sig"];
+            _logger.Write("Signature:", isNewSection: true);
+            _logger.Write(signature);
+            byte[] signatureBytes = Convert.FromBase64String(signature);
+            bool isSignatureValid = rsaProvider.VerifyHash(hashBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            _logger.Write("Authentication signature valid: " + isSignatureValid);
+            if (!isSignatureValid)
+                return "";
+
             //Initialize our symetric cryptography provider.
             AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
             aesProvider.KeySize = 256;
 
-            //Encrypte the symetric private key and IV with the asymetric public key.
+            //Encrypt the symetric private key and IV with the asymetric public key.
             var encryptedKeyBytes = rsaProvider.Encrypt(aesProvider.Key, true);
             var encryptedIvBytes = rsaProvider.Encrypt(aesProvider.IV, true);
 

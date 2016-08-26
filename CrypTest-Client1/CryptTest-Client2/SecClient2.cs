@@ -260,7 +260,39 @@ namespace CryptTest_Client2
             //Add the session ID to the session dictionary, and include the RSA public and private key info.
             _sessionKeys.Add(sessID, new Tuple<string, string, string>(rsaProvider.ToXmlString(true), null, null));
 
-            SendResponseSecure(rsaProviderXML, context, "ok");
+            //Create the authentication signature.
+            string signature = CreateSignature(rsaProvider, rsaProviderXML);
+            _logger.Write("Signature:", isNewSection: true);
+            _logger.Write(signature);
+
+            //Create a response header for the authentication signature.
+            var responseHeaders = new NameValueCollection();
+            responseHeaders.Add("sectest-auth-sig", signature);
+
+            SendResponseSecure(rsaProviderXML, context, "ok", responseHeaders);
+        }
+
+        private string CreateSignature(RSACryptoServiceProvider rsaProvider, string message)
+        {
+            //Create a hash of the message.
+            byte[] hashBytes = null;
+            SHA256 sha256 = SHA256.Create();
+            using(MemoryStream ms = new MemoryStream())
+            using (StreamWriter sw = new StreamWriter(ms, Encoding.UTF8))
+            {
+                sw.Write(message);
+                sw.Close();
+
+                hashBytes = sha256.ComputeHash(ms.ToArray());
+            }
+
+            //Encrypt the hash using the asymetric private key (to be decrypted on the other side using public key soley as means for them to verify
+            //this side has the associated private key).
+            byte[] signedHashBytes = rsaProvider.SignHash(hashBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+            //Encode the signed hash as base 64.
+            string signedHash = Convert.ToBase64String(signedHashBytes);
+            return signedHash;
         }
 
         private string ProcessHandshakeKeyExchange(string message, NameValueCollection headers, HttpListenerContext context, string sessID)
@@ -338,13 +370,18 @@ namespace CryptTest_Client2
             return plainTextBody;
         }
 
-        private void SendResponseSecure(string responseMessage, HttpListenerContext context, string status = null)
+        private void SendResponseSecure(string responseMessage, HttpListenerContext context, string status = null, NameValueCollection headers = null)
         {
             _logger.Write("Creating response...", isNewSection: true);
             var response = context.Response;
             if (!string.IsNullOrWhiteSpace(status))
             {
                 response.AddHeader("sectest-status", status);
+            }
+            if(headers!= null)
+            {
+                foreach (var headerKey in headers.Keys)
+                    response.AddHeader(headerKey.ToString(), headers[headerKey.ToString()]);
             }
             response.StatusCode = 200;
             _logger.Write("Response body: ");

@@ -22,7 +22,7 @@
         <Label Name="LogLabel" Grid.Column="0" Grid.Row="0">
             Log Console:
         </Label>
-        <ScrollViewer Name="LogScrollViewer" Grid.Column="0" Grid.Row="1">
+        <ScrollViewer Name="LogScrollViewer" Grid.Column="0" Grid.Row="1" ScrollViewer.HorizontalScrollBarVisibility="Visible">
             <TextBlock Name="LogTextBlock">
             </TextBlock>
         </ScrollViewer>
