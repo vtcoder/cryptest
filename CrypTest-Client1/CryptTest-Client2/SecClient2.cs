@@ -332,12 +332,31 @@ namespace CryptTest_Client2
                 string key = keyInfo.Item2;
                 string iv = keyInfo.Item3;
 
+                //Decrypt the symetrically encrypted body message.
                 string message = DecryptRequestBodySecure(encryptedMessage, key, iv);
 
                 _logger.Write("Encrypted message:", isNewSection: true);
                 _logger.Write(encryptedMessage);
                 _logger.Write("Decrypted message:", isNewSection: true);
                 _logger.Write(message);
+
+                //Check the HMAC.
+                string hmacHash = headers["sectest-hmac"];
+                var hmacHashBytes = Convert.FromBase64String(hmacHash);
+                var hmacMD5 = HMACMD5.Create();
+                hmacMD5.Key = Convert.FromBase64String(key); //NOTE we use the secret symetric key for the HMAC hash key.
+                var encryptedBytes = Convert.FromBase64String(encryptedMessage);
+                var ourHmacHashBytes = hmacMD5.ComputeHash(encryptedBytes);
+                string ourHmacHash = Convert.ToBase64String(ourHmacHashBytes);
+                if(hmacHash == ourHmacHash)
+                {
+                    _logger.Write("HMAC hash matched", isNewSection: true);
+                }
+                else
+                {
+                    _logger.Write("HMAC hash did not match", isNewSection: true);
+                    return "";
+                }
 
                 return "Secure message received!";
             }
@@ -378,7 +397,7 @@ namespace CryptTest_Client2
             {
                 response.AddHeader("sectest-status", status);
             }
-            if(headers!= null)
+            if(headers != null)
             {
                 foreach (var headerKey in headers.Keys)
                     response.AddHeader(headerKey.ToString(), headers[headerKey.ToString()]);

@@ -17,8 +17,8 @@ namespace CrypTest_Client1
     /// - DONE: private key symetric messgae encryption, using dymacially generated keys
     /// - DONE: public key asymetric key exchange, used to pass the priv-sym-key
     ///     NOTE only done for client1 to cliet2 as server
-    /// - Digital signature to ensure authentication
-    /// - MAC hash of message content to ensure it hasn't changed
+    /// - DONE: Digital signature to ensure authentication
+    /// - DONE: MAC hash of message content to ensure it hasn't changed
     /// - Refactor to common library
     /// - Fill out both sides
     /// - Use a test certificate as the source of the asymetric keys?
@@ -255,10 +255,22 @@ namespace CrypTest_Client1
             _logger.Write("Sending symetric encrypted data message.", isNewSection: true);
 
             //Encrypt the message.
-            string encryptedMessage = SymetricEncryptMessage(message, aesProvider.Key, aesProvider.IV);
+            var encryptedData = SymetricEncryptMessage(message, aesProvider.Key, aesProvider.IV);
+            string encryptedMessage = encryptedData.Item1;
+            byte[] encryptedBytes = encryptedData.Item2;
 
-            //Send a symetricly encrypted message.
-            var messageResponse = SendHttpMessageSecure(encryptedMessage, "message-transfer", sessID);
+            //Create a hash of the encrypted message (HMAC) to ensure message integrity.
+            var hmacMD5 = HMACMD5.Create();
+            hmacMD5.Key = aesProvider.Key; //NOTE we use the secret symetric key for the HMAC hash key.
+            var hmacHashBytes = hmacMD5.ComputeHash(encryptedBytes);
+            string hmacHash = Convert.ToBase64String(hmacHashBytes);
+
+            //Create request header for the HMAC.
+            var requestHeaders = new NameValueCollection();
+            requestHeaders.Add("sectest-hmac", hmacHash);
+
+            //Send a symetricly encrypted message. Include the HMAC as a header.            
+            var messageResponse = SendHttpMessageSecure(encryptedMessage, "message-transfer", sessID, requestHeaders);
 
             //Check status of data messge.
             status = handshakeInitResponse.Item2["sectest-status"];
@@ -278,13 +290,14 @@ namespace CrypTest_Client1
             return SendHttpMessageSecure(handshakeKeyExchangeMessage, "handshake-key-exchange", sessID);
         }
 
-        private string SymetricEncryptMessage(string message, byte[] sessKey, byte[] iv)
+        private Tuple<string, byte[]> SymetricEncryptMessage(string message, byte[] sessKey, byte[] iv)
         {
             AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
             aesProvider.Key = sessKey;
             aesProvider.IV = iv;
 
             string encryptedMessage = null;
+            byte[] encryptedBytes = null;
             using (MemoryStream ms = new MemoryStream())
             using (CryptoStream cs = new CryptoStream(ms, aesProvider.CreateEncryptor(), CryptoStreamMode.Write))
             using (StreamWriter sr = new StreamWriter(cs))
@@ -292,13 +305,14 @@ namespace CrypTest_Client1
                 sr.Write(message);
                 sr.Close();
 
-                encryptedMessage = Convert.ToBase64String(ms.ToArray());
+                encryptedBytes = ms.ToArray();
+                encryptedMessage = Convert.ToBase64String(encryptedBytes);
             }
 
-            return encryptedMessage;
+            return new Tuple<string, byte[]>(encryptedMessage, encryptedBytes);
         }
 
-        private Tuple<string, NameValueCollection> SendHttpMessageSecure(string message, string secTestAction, string sessID = null)
+        private Tuple<string, NameValueCollection> SendHttpMessageSecure(string message, string secTestAction, string sessID = null, NameValueCollection headers = null)
         {
             HttpWebRequest req = WebRequest.Create("http://localhost:13490/sectest/secure/") as HttpWebRequest;
             req.Headers.Add("sectest-req-client", "1"); //Set header to indicate request came from security client #2.
@@ -306,6 +320,11 @@ namespace CrypTest_Client1
             if (!string.IsNullOrWhiteSpace(sessID))
             {
                 req.Headers.Add("sectest-sessid", sessID);
+            }
+            if (headers != null)
+            {
+                foreach (var headerKey in headers.Keys)
+                    req.Headers.Add(headerKey.ToString(), headers[headerKey.ToString()]);
             }
             req.MediaType = "text/xml";
             req.Method = "POST";
