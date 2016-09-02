@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CryptTest_Lib.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,26 +31,23 @@ namespace CryptTest_Client2
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
-            SendTestRequestButton.Click += SendTestRequestButton_Click;
             SendSecRequestButton.Click += SendSecRequestButton_Click;
             OpenClient1Button.Click += OpenClient1Button_Click;
         }
 
         private void SendSecRequestButton_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            _logger.Write("Sending secure request to client 1...", isNewSection: true);
+            string messageToSend = "Hello, this is a secure test message from client 2 to client 1.";
+            _logger.Write("Message to send:");
+            _logger.Write(messageToSend);
+            var res = _secClient2.SendSecureRequest(messageToSend);
+            _logger.Write("Response was: " + res);
         }
 
         private void OpenClient1Button_Click(object sender, RoutedEventArgs e)
         {
             Process.Start(@"..\..\..\CrypTest-Client1\bin\Debug\CrypTest-Client1.exe");
-        }
-
-        private void SendTestRequestButton_Click(object sender, RoutedEventArgs e)
-        {
-            _logger.Write("Sending test request to client 1...");
-            var res = _secClient2.SendRequest();
-            _logger.Write("Response was: " + res);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -75,7 +73,7 @@ namespace CryptTest_Client2
         }
     }
 
-    public class Logger
+    public class Logger : ILogger
     {
         private TextBlock _logTextBlock;
         private ScrollViewer _logScrollViewer;

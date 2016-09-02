@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrypTest-Client1", "CrypTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptTest-Client2", "CryptTest-Client2\CryptTest-Client2.csproj", "{1149DD7C-F081-42FD-BEAE-B98D14F08C44}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptTest-Lib", "CryptTest-Lib\CryptTest-Lib.csproj", "{0C5E995E-B448-4667-B0AF-41D257CC4DCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1149DD7C-F081-42FD-BEAE-B98D14F08C44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C5E995E-B448-4667-B0AF-41D257CC4DCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C5E995E-B448-4667-B0AF-41D257CC4DCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C5E995E-B448-4667-B0AF-41D257CC4DCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C5E995E-B448-4667-B0AF-41D257CC4DCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

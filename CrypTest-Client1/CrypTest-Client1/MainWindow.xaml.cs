@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CryptTest_Lib.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -31,7 +32,6 @@ namespace CrypTest_Client1
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
             CloseButton.Click += CloseButton_Click;
-            SendTestRequestButton.Click += SendTestRequestButton_Click;
             SendSecRequestButton.Click += SendSecRequestButton_Click;
             OpenClient2Button.Click += OpenClient2Button_Click;
         }
@@ -49,13 +49,6 @@ namespace CrypTest_Client1
         private void OpenClient2Button_Click(object sender, RoutedEventArgs e)
         {
             Process.Start(@"..\..\..\CryptTest-Client2\bin\Debug\CryptTest-Client2.exe");
-        }
-
-        private void SendTestRequestButton_Click(object sender, RoutedEventArgs e)
-        {
-            _logger.Write("Sending test request to client 2...");
-            var res = _secClient1.SendRequest();
-            _logger.Write("Response was: " + res);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -81,7 +74,7 @@ namespace CrypTest_Client1
         }
     }
 
-    public class Logger
+    public class Logger : ILogger
     {
         private TextBlock _logTextBlock;
         private ScrollViewer _logScrollViewer;

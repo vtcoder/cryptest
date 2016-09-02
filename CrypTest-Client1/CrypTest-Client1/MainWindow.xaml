@@ -29,8 +29,7 @@
 
         <StackPanel Name="ButtonsStackPanel" Grid.Column="0" Grid.Row="2" Orientation="Horizontal">
             <Button Name="OpenClient2Button">Open Client 2</Button>
-            <Button Name="SendTestRequestButton">Send Test Request</Button>
-            <Button Name="SendSecRequestButton">Send Sec Request</Button>
+            <Button Name="SendSecRequestButton">Send Secure Request</Button>
             <Button Name="CloseButton">Close</Button>
         </StackPanel>
     </Grid>
