@@ -40,7 +40,7 @@ namespace CryptTest_Client2
         public string SendSecureRequest(string message)
         {
             SecureClient secureClient = new SecureClient("Secure Client 2 - Client", _logger, _clientPort);
-            return secureClient.SendSecureRequest(message);
+            return secureClient.SendRequest(message);
         }
     }
 }

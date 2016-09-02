@@ -1,4 +1,5 @@
-﻿using CryptTest_Lib.Logging;
+﻿using CryptTest_Lib.Cryptography;
+using CryptTest_Lib.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -25,14 +26,18 @@ namespace CryptTest_Lib.Protocol
             _logger = logger;
         }
 
-        public string SendSecureRequest(string message)
+        public string SendRequest(string message)
         {
+            AsymetricCrypto asymCrypto = new AsymetricCrypto();
+            SymetricCrypto symCrypto = new SymetricCrypto();
+            HashCrypto hashCrypto = new HashCrypto();
+
             //Generate a new session ID for this set of secure messages.
             string sessID = Guid.NewGuid().ToString();
 
             //Send unsecure init message with new session-id.
             _logger.Write("Sending handshake-init message.", isNewSection: true);
-            var handshakeInitResponse = SendHttpMessageSecure("<sectest>init</sectest>", "handshake-init", sessID);
+            var handshakeInitResponse = SendHttpMessage("<sectest>init</sectest>", "handshake-init", sessID);
 
             //Check status of init message.
             string status = handshakeInitResponse.Item2["sectest-status"];
@@ -43,22 +48,6 @@ namespace CryptTest_Lib.Protocol
                 return "";
             }
 
-            //Initialize our asymetric cryptography provider. This will just have the public key.
-            RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
-            rsaProvider.FromXmlString(handshakeInitResponse.Item1);
-
-            //Create a hash of the message (to use for authentication signature verifiation).
-            byte[] hashBytes = null;
-            SHA256 sha256 = SHA256.Create();
-            using (MemoryStream ms = new MemoryStream())
-            using (StreamWriter sw = new StreamWriter(ms, Encoding.UTF8))
-            {
-                sw.Write(handshakeInitResponse.Item1);
-                sw.Close();
-
-                hashBytes = sha256.ComputeHash(ms.ToArray());
-            }
-
             //Check the authentication signature to make sure it is valid.
             //This tells us
             // a) The sender has the private key associated with this public key, so they are who they say they are (assuming we know we can trust the public key, like with a certificate, but ignoring that part for now)
@@ -66,27 +55,21 @@ namespace CryptTest_Lib.Protocol
             string signature = handshakeInitResponse.Item2["sectest-auth-sig"];
             _logger.Write("Signature:", isNewSection: true);
             _logger.Write(signature);
-            byte[] signatureBytes = Convert.FromBase64String(signature);
-            bool isSignatureValid = rsaProvider.VerifyHash(hashBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            bool isSignatureValid = asymCrypto.VerifySignature(handshakeInitResponse.Item1, signature);
             _logger.Write("Authentication signature valid: " + isSignatureValid);
             if (!isSignatureValid)
                 return "";
 
-            //Initialize our symetric cryptography provider.
-            AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
-            aesProvider.KeySize = 256;
+            //Generate symetric key and IV.
+            var keyAndIv = symCrypto.GenerateKeyAndIv();
 
             //Encrypt the symetric private key and IV with the asymetric public key.
-            var encryptedKeyBytes = rsaProvider.Encrypt(aesProvider.Key, true);
-            var encryptedIvBytes = rsaProvider.Encrypt(aesProvider.IV, true);
-
-            //Encode encrypted key and IV as base64 string to send on wire.
-            string encryptedKey = Convert.ToBase64String(encryptedKeyBytes);
-            string encryptedIv = Convert.ToBase64String(encryptedIvBytes);
+            string encryptedKey = asymCrypto.Encrypt(keyAndIv.Item1, handshakeInitResponse.Item1);
+            string encryptedIv = asymCrypto.Encrypt(keyAndIv.Item2, handshakeInitResponse.Item1);
 
             //Send semi-secure handshake key exchange message to establish the private symetric key.
             _logger.Write("Sending handshake-key-exchange message.", isNewSection: true);
-            var handshakeKeyExchangeResponse = SendSecureRequest_Handshake(encryptedKey, encryptedIv, sessID);
+            var handshakeKeyExchangeResponse = SendRequest_Handshake(encryptedKey, encryptedIv, sessID);
 
             //Check status of key-exchange messge.
             status = handshakeInitResponse.Item2["sectest-status"];
@@ -100,22 +83,18 @@ namespace CryptTest_Lib.Protocol
             _logger.Write("Sending symetric encrypted data message.", isNewSection: true);
 
             //Encrypt the message.
-            var encryptedData = SymetricEncryptMessage(message, aesProvider.Key, aesProvider.IV);
+            var encryptedData = SymetricEncryptMessage(message, sessKey: keyAndIv.Item1, iv: keyAndIv.Item2);
             string encryptedMessage = encryptedData.Item1;
-            byte[] encryptedBytes = encryptedData.Item2;
 
             //Create a hash of the encrypted message (HMAC) to ensure message integrity.
-            var hmacMD5 = HMACMD5.Create();
-            hmacMD5.Key = aesProvider.Key; //NOTE we use the secret symetric key for the HMAC hash key.
-            var hmacHashBytes = hmacMD5.ComputeHash(encryptedBytes);
-            string hmacHash = Convert.ToBase64String(hmacHashBytes);
+            string hmacHash = hashCrypto.GenerateHmac(encryptedData.Item2, keyAndIv.Item1); //NOTE we use the secret symetric key for the HMAC hash key.
 
             //Create request header for the HMAC.
             var requestHeaders = new NameValueCollection();
             requestHeaders.Add("sectest-hmac", hmacHash);
 
             //Send a symetricly encrypted message. Include the HMAC as a header.            
-            var messageResponse = SendHttpMessageSecure(encryptedMessage, "message-transfer", sessID, requestHeaders);
+            var messageResponse = SendHttpMessage(encryptedMessage, "message-transfer", sessID, requestHeaders);
 
             //Check status of data messge.
             status = handshakeInitResponse.Item2["sectest-status"];
@@ -129,10 +108,10 @@ namespace CryptTest_Lib.Protocol
             return messageResponse.Item1;
         }
 
-        private Tuple<string, NameValueCollection> SendSecureRequest_Handshake(string encryptedSessKey, string encryptedIv, string sessID)
+        private Tuple<string, NameValueCollection> SendRequest_Handshake(string encryptedSessKey, string encryptedIv, string sessID)
         {
             string handshakeKeyExchangeMessage = $"<sectest><symcrypt><sesskey>{encryptedSessKey}</sesskey><iv>{encryptedIv}</iv></symcrypt></sectest>";
-            return SendHttpMessageSecure(handshakeKeyExchangeMessage, "handshake-key-exchange", sessID);
+            return SendHttpMessage(handshakeKeyExchangeMessage, "handshake-key-exchange", sessID);
         }
 
         private Tuple<string, byte[]> SymetricEncryptMessage(string message, byte[] sessKey, byte[] iv)
@@ -157,7 +136,7 @@ namespace CryptTest_Lib.Protocol
             return new Tuple<string, byte[]>(encryptedMessage, encryptedBytes);
         }
 
-        private Tuple<string, NameValueCollection> SendHttpMessageSecure(string message, string secTestAction, string sessID = null, NameValueCollection headers = null)
+        private Tuple<string, NameValueCollection> SendHttpMessage(string message, string secTestAction, string sessID = null, NameValueCollection headers = null)
         {
             HttpWebRequest req = WebRequest.Create("http://localhost:" + _port + "/sectest/secure/") as HttpWebRequest;
             req.Headers.Add("sectest-req-client", "1"); //Set header to indicate request came from security client #2.

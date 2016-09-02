@@ -33,7 +33,7 @@ namespace CryptTest_Lib.Protocol
         {
             _httpListenerSecure = new HttpListener();
             _httpListenerSecure.Prefixes.Add(@"http://+:" + _port + @"/sectest/secure/");
-            ListenForRequestsSecure();
+            ListenForRequests();
             _logger.Write("SecureServer [" + _name + "] is now listening (secure) on " + _httpListenerSecure.Prefixes.FirstOrDefault());
         }
 
@@ -44,7 +44,7 @@ namespace CryptTest_Lib.Protocol
             _httpListenerSecure.Close();
         }
 
-        private async void ListenForRequestsSecure()
+        private async void ListenForRequests()
         {
             _httpListenerSecure.Start();
 
@@ -71,7 +71,7 @@ namespace CryptTest_Lib.Protocol
                     _logger.Write(rawRequestBody);
 
                     //Process the request.
-                    ProcessSecureRequest(rawRequestBody, request.Headers, context);
+                    ProcessRequest(rawRequestBody, request.Headers, context);
                 }
             }
             catch (ObjectDisposedException)
@@ -79,7 +79,7 @@ namespace CryptTest_Lib.Protocol
             }
         }
 
-        private void ProcessSecureRequest(string message, NameValueCollection headers, HttpListenerContext context)
+        private void ProcessRequest(string message, NameValueCollection headers, HttpListenerContext context)
         {
             string action = "undefined";
             string sessID = "undefined";
@@ -104,11 +104,11 @@ namespace CryptTest_Lib.Protocol
                     break;
                 case "handshake-key-exchange":
                     var handshakeResponse = ProcessHandshakeKeyExchange(message, headers, context, sessID);
-                    SendResponseSecure(handshakeResponse, context);
+                    SendResponse(handshakeResponse, context);
                     break;
                 case "message-transfer":
-                    var responseMessage = ProcessMessageSecure(message, headers, context, sessID);
-                    SendResponseSecure(responseMessage, context);
+                    var responseMessage = ProcessMessage(message, headers, context, sessID);
+                    SendResponse(responseMessage, context);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -136,7 +136,7 @@ namespace CryptTest_Lib.Protocol
             var responseHeaders = new NameValueCollection();
             responseHeaders.Add("sectest-auth-sig", signature);
 
-            SendResponseSecure(rsaProviderPublicXML, context, "ok", responseHeaders);
+            SendResponse(rsaProviderPublicXML, context, "ok", responseHeaders);
         }
 
         private string ProcessHandshakeKeyExchange(string message, NameValueCollection headers, HttpListenerContext context, string sessID)
@@ -161,7 +161,7 @@ namespace CryptTest_Lib.Protocol
             return handshakeKeyExchangeResponse;
         }
 
-        private string ProcessMessageSecure(string encryptedMessage, NameValueCollection headers, HttpListenerContext context, string sessID)
+        private string ProcessMessage(string encryptedMessage, NameValueCollection headers, HttpListenerContext context, string sessID)
         {
             SymetricCrypto symCrypto = new SymetricCrypto();
             HashCrypto hashCrypto = new HashCrypto();
@@ -202,7 +202,7 @@ namespace CryptTest_Lib.Protocol
             }
         }
 
-        private void SendResponseSecure(string responseMessage, HttpListenerContext context, string status = null, NameValueCollection headers = null)
+        private void SendResponse(string responseMessage, HttpListenerContext context, string status = null, NameValueCollection headers = null)
         {
             _logger.Write("Creating response...", isNewSection: true);
             var response = context.Response;

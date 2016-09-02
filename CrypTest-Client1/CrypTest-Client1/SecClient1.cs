@@ -52,7 +52,7 @@ namespace CrypTest_Client1
         public string SendSecureRequest(string message)
         {
             SecureClient secureClient = new SecureClient("Secure Client 1 - Client", _logger, _clientPort);
-            return secureClient.SendSecureRequest(message);
+            return secureClient.SendRequest(message);
         }
     }
 }

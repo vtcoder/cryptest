@@ -9,6 +9,17 @@ namespace CryptTest_Lib.Cryptography
 {
     public class HashCrypto
     {
+        public string GenerateHmac(byte[] encryptedMessageBytes, byte[] key)
+        {
+            //Create a hash of the encrypted message (HMAC) to ensure message integrity.
+            var hmacMD5 = HMACMD5.Create();
+            hmacMD5.Key = key;
+            var hmacHashBytes = hmacMD5.ComputeHash(encryptedMessageBytes);
+            string hmacHash = Convert.ToBase64String(hmacHashBytes);
+
+            return hmacHash;
+        }
+
         public bool VerifyHmac(string encryptedMessage, string hmacHash, string key)
         {
             bool isHmacValid = false;

@@ -10,6 +10,13 @@ namespace CryptTest_Lib.Cryptography
 {
     public class SymetricCrypto
     {
+        public Tuple<byte[], byte[]> GenerateKeyAndIv()
+        {
+            AesCryptoServiceProvider aesProvider = new AesCryptoServiceProvider();
+            aesProvider.KeySize = 256;
+            return new Tuple<byte[], byte[]>(aesProvider.Key, aesProvider.IV);
+        }
+
         public string Decrypt(string encryptedText, string key, string iv)
         {
             string plainText = null;
